@@ -1,28 +1,26 @@
 # lethio-food-db
 
-The Open Food Facts derived database used by **Lethio Macro Tracker**, published under the Open
-Database License (ODbL) 1.0 because the ODbL asks for it.
+Branded food products derived from [Open Food Facts](https://world.openfoodfacts.org/), published
+under the Open Database License (ODbL) 1.0.
 
-**Download: [Releases](https://github.com/TerjeRu/lethio-food-db/releases)**
+**[Download from Releases](https://github.com/TerjeRu/lethio-food-db/releases)**
 
-| File | Size | What |
+| File | Size | Format |
 |---|---|---|
-| `lethio-off-derived-build16.sqlite` | 90 MB | SQLite, the schema the app itself uses |
-| `lethio-off-derived-build16.csv.gz` | 19 MB | One row per food, gzipped, for everyone else |
+| `lethio-off-derived-build16.sqlite` | 90 MB | SQLite 3 |
+| `lethio-off-derived-build16.csv.gz` | 19 MB | Gzipped CSV, one row per food |
 
-376,048 branded food products, with per-100 g energy, protein, fat, carbohydrate, fibre, sugar,
-saturated fat and sodium, plus barcodes, serving sizes, brand and country.
+376,048 products with per-100 g nutrition, 514,062 barcodes, 136,118 serving sizes, across 180
+country codes.
 
-## Licence, and exactly what it covers
+## Licence
 
-The data in this repository is derived from [Open Food Facts](https://world.openfoodfacts.org/data)
-and is made available under the **Open Database License (ODbL) 1.0**. The full text is in
-[`LICENSE`](LICENSE).
+The data is made available under the [Open Database License (ODbL) 1.0](LICENSE).
 
-> **The ODbL applies exclusively to the portion of the Lethio Macro Tracker database derived from
-> Open Food Facts, which is the entirety of what this repository publishes.**
+The ODbL applies exclusively to the portion of the Lethio Macro Tracker database derived from Open
+Food Facts, which is the entirety of what this repository publishes.
 
-Attribution, which the licence requires you to keep if you reuse this:
+Required attribution for reuse:
 
 ```
 Contains information from Open Food Facts (https://world.openfoodfacts.org),
@@ -30,68 +28,109 @@ which is made available under the Open Database License (ODbL) 1.0.
 © Open Food Facts contributors.
 ```
 
-### What is deliberately not here
+## Scope
 
-The app also bundles thirteen national food composition tables. **None of them are in this
-repository**, and that is a licence decision rather than an oversight.
+Contains: Open Food Facts records only, `source = 'off'`.
 
-Those tables are free to *use* with credit, which is not the same as free to *relicense*. BEDCA's
-terms are the clearest case: non-commercial, attribution, and no modification. This pipeline
-modifies every row it touches, through name cleaning, Unicode folding, unit normalisation and a
-120-character name cap. Republishing those rows under a licence that grants commercial reuse would
-hand out permissions their publishers never gave.
-
-So the ODbL obligation is discharged over the Open Food Facts data, which is what the ODbL covers,
-and the national tables stay where their publishers put them. Each one is credited inside the app,
-with its own licence named, on the Data sources screen.
+Does not contain: the thirteen national food composition tables that Lethio Macro Tracker also
+bundles (BEDCA, CoFID, Ciqual, BLS, Matvaretabellen, Livsmedelsdatabasen, Fineli, Frida, Swiss
+FCDB, TCA, CNF, AFCD, USDA FoodData Central). Their licences permit use with attribution but do not
+grant redistribution under ODbL. BEDCA additionally prohibits modification. Obtain those from their
+publishers.
 
 ## Provenance
 
 | | |
 |---|---|
-| Upstream | `en.openfoodfacts.org.products.csv.gz`, downloaded 2026-08-17 |
-| Built | 2026-09-06, database build 16 |
-| Rows upstream | 4,532,767 |
-| Rows here | 376,048 |
+| Upstream | `en.openfoodfacts.org.products.csv.gz` |
+| Downloaded | 2026-08-17 |
+| Built | 2026-09-06 |
+| Build version | 16 |
+| Upstream records | 4,532,767 |
+| Records here | 376,048 |
 
-Open Food Facts republishes daily, so the upstream file is a moving target. The date above is the
-one that matters for reproducing this exact export.
+Open Food Facts republishes daily. The download date above identifies the input.
 
-## What was changed, and why that is the point
+## Schema
 
-This is a *derived* database, not a copy. Share-alike exists so the derivation comes back out, so
-the changes travel with it:
+### `foods`
 
-- **`name`** is repaired rather than rewritten: double-encoded UTF-8 undone (`CÃ´te` back to
-  `Côte`), HTML entities and control characters removed, whitespace collapsed. A name is rejected
-  outright if it falls outside 2 to 120 characters, contains a URL, or contains no letters at all,
-  the last being a barcode or a weight that ended up in the name field
-- **`name_folded`** is a search key with diacritics folded, including `ø`→`o`, `ł`→`l`, `ð`→`d`
-- **`carbs_convention`** records whether the publisher's carbohydrate figure is by difference or
-  available carbohydrate, so the number is interpretable rather than merely present
-- **`quality_score`**, **`basic_rank`** and **`source_rank`** are ours: they order search results
-  and mean nothing outside the app, but they are included rather than stripped
-- Rows with no energy value, or outside 0 to 900 kcal per 100 g, were dropped
-- Barcodes are validated against the GTIN check digit, not just length. About 3.7% of
-  otherwise well-formed codes upstream fail it; those are internal or mistyped codes that no
-  scanner will ever produce
-- Duplicate listings of the same product were collapsed onto the best-documented row, and **every
-  dropped row's barcode moved onto the survivor**, which is why there are 514,062 barcodes over
-  376,048 rows
+| Column | Type | Notes |
+|---|---|---|
+| `id` | INTEGER | Primary key, assigned by the build |
+| `name` | TEXT | Product name, normalised (see Transformations) |
+| `name_folded` | TEXT | Search key, diacritics folded |
+| `lang` | TEXT | Always NULL in this subset |
+| `brand` | TEXT | 91% populated |
+| `barcode` | TEXT | Display value; the full mapping is in `food_barcodes` |
+| `kcal_100g` | REAL | 0–900, required |
+| `protein_100g` | REAL | Grams, required |
+| `fat_100g` | REAL | Grams, required |
+| `carbs_100g` | REAL | Grams, required |
+| `carbs_convention` | TEXT | Always `available` in this subset |
+| `fiber_100g` | REAL | Grams, 65% populated |
+| `sugar_100g` | REAL | Grams, 98% populated |
+| `sat_fat_100g` | REAL | Grams, 97% populated |
+| `sodium_100g` | REAL | Grams, 95% populated |
+| `density_g_per_ml` | REAL | Always NULL in this subset |
+| `source` | TEXT | Always `off` |
+| `quality_score` | INTEGER | Application-specific completeness score |
+| `basic_rank` | INTEGER | Application-specific search ordering |
+| `source_rank` | INTEGER | Application-specific search ordering |
+| `alias_names` | TEXT | Always NULL in this subset |
+| `search_extra` | TEXT | Always NULL in this subset |
+| `country` | TEXT | ISO 3166-1 alpha-2, from the product's markets |
 
-Rebuilding is `tools/build_nutrition_db.py` followed by `tools/export_odbl_subset.py`. Both are
-here. The build script needs the raw sources, which are not redistributed; it names each one and
-where to get it.
+The three `*_rank` and `quality_score` columns order results inside the app and carry no meaning
+outside it. They are included rather than stripped.
 
-## The app
+### `food_barcodes`
 
-[Lethio Macro Tracker](https://macros.lethio.com) is a calorie and macro diary for Android, built
-on national food composition tables with Open Food Facts covering branded products. The whole
-database ships inside the app, so search works offline.
+`barcode TEXT`, `food_id INTEGER`. 514,062 rows. More barcodes than foods because duplicate
+listings were merged and their barcodes retained against the surviving record.
 
-It also contributes back: when a scan finds a barcode Open Food Facts does not have, the app can
-send the product a reader types in. That is off by default and lives behind its own switch.
+### `food_servings`
+
+`id`, `food_id`, `label`, `grams`, `is_default`, `sort_order`. 136,118 rows, at most one per food.
+
+### `food_aliases`
+
+Present in the schema, empty in this subset.
+
+### CSV
+
+The CSV carries the `foods` columns plus a trailing `barcodes` column, semicolon-separated, so the
+one-to-many barcode mapping survives flattening. Serving sizes are in the SQLite file only.
+
+## Transformations applied to the upstream data
+
+- Name repair: double-encoded UTF-8 corrected, HTML entities and control characters removed,
+  whitespace collapsed.
+- Name rejection: names outside 2–120 characters, names containing a URL, and names containing no
+  letters are dropped.
+- Energy filter: records with no energy value, or outside 0–900 kcal per 100 g, are dropped.
+- Barcode validation: GTIN-8/12/13/14 check digit verified. Approximately 3.7% of otherwise
+  well-formed upstream codes fail this and are dropped.
+- Deduplication: repeated listings of the same product are merged onto the most complete record.
+  Barcodes from merged records are retained.
+- Micronutrient values failing plausibility bounds are dropped rather than stored.
+
+## Reproducing
+
+`tools/build_nutrition_db.py` builds the full database from the raw sources; it documents each
+source and where to obtain it. Raw sources are not redistributed here.
+
+`tools/export_odbl_subset.py` produces the release artifacts:
+
+```bash
+python tools/export_odbl_subset.py --seed seed.db --out out --build build16
+```
+
+## Related
+
+[Lethio Macro Tracker](https://macros.lethio.com), the Android application this database was built
+for.
 
 ## Contact
 
-`support@lethio.com`
+support@lethio.com
