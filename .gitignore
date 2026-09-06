@@ -1,0 +1,10 @@
+# Release assets are attached to GitHub Releases, not committed.
+# The SQLite export is 90 MB and the CSV 19 MB; git is the wrong place for both.
+*.sqlite
+*.csv.gz
+*.db
+
+# Raw upstream sources are never redistributed here. The build script names each
+# one and where to get it.
+/raw/
+/nutrition-raw/
