@@ -3,6 +3,9 @@
 *.sqlite
 *.csv.gz
 *.db
+/build/
+__pycache__/
+*.py[cod]
 
 # Raw upstream sources are never redistributed here. The build script names each
 # one and where to get it.
