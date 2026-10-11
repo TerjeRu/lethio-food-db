@@ -7,8 +7,8 @@ under the Open Database License (ODbL) 1.0.
 
 | File | Size | Format |
 |---|---|---|
-| `lethio-off-derived-build18.sqlite` | 110 MB | SQLite 3 |
-| `lethio-off-derived-build18.csv.gz` | 22 MB | Gzipped CSV, one row per food |
+| `lethio-off-derived-build19.sqlite` | 112 MB | SQLite 3 |
+| `lethio-off-derived-build19.csv.gz` | 22 MB | Gzipped CSV, one row per food |
 
 520,432 products with per-100 g nutrition, 520,432 barcodes, 156,487 serving sizes, across 187
 country codes.
@@ -42,8 +42,8 @@ The app's national food tables have separate terms, listed in
 |---|---|
 | Upstream | `en.openfoodfacts.org.products.csv.gz` |
 | Downloaded | 2026-08-17 |
-| Built | 2026-09-29 |
-| Build version | 18 |
+| Built | 2026-10-08 |
+| Build version | 19 |
 | Upstream records | 4,532,767 |
 | Records here | 520,432 |
 
@@ -121,7 +121,7 @@ and build a catalogue.
 `tools/export_odbl_subset.py` produces the release artifacts:
 
 ```bash
-python tools/export_odbl_subset.py --seed seed.db --out out --build build18
+python tools/export_odbl_subset.py --seed seed.db --out out --build build19
 ```
 
 ## Related
