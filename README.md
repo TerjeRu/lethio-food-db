@@ -115,9 +115,8 @@ one-to-many barcode mapping survives flattening. Serving sizes are in the SQLite
 ## Reproducing
 
 The [app source repository](https://github.com/TerjeRu/lethio-macro-tracker) contains the database
-builder, its helper modules, and the Room schema. The build 18 pipeline is available at
-[commit 868ec97](https://github.com/TerjeRu/lethio-macro-tracker/tree/868ec972b27ac481a736329c10c14699c59cc4c5).
-Follow its README to obtain the upstream inputs and build a catalogue.
+builder, its helper modules, and the Room schema. Follow its README to obtain the upstream inputs
+and build a catalogue.
 
 `tools/export_odbl_subset.py` produces the release artifacts:
 
